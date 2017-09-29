@@ -47,11 +47,22 @@ The result is (with a newline): test
 Found it after 301649 tries and 1.953693 seconds!
 ```
 
+## Wodlists
+
+Either build one with [John The Ripper](https://github.com/magnumripper/JohnTheRipper):
+
+```
+john --wordlist=wordlist.txt --rules --stdout > mutated.txt
+```
+
+Or get em from [here](https://github.com/danielmiessler/SecLists/tree/master/Passwords).
+
 ## FAQ
 
 ### But, why?
 
 Because I am...
+
 ![awesome](https://media.giphy.com/media/T2MuGuH3u1eeI/giphy.gif)
 
-![fu](https://media.giphy.com/media/QGzPdYCcBbbZm/giphy.gif)
+
