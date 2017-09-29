@@ -52,8 +52,6 @@ Found it after 301649 tries and 1.953693 seconds!
 ### But, why?
 
 Because I am...
-![](https://media.giphy.com/media/T2MuGuH3u1eeI/giphy.gif)
+![awesome](https://media.giphy.com/media/T2MuGuH3u1eeI/giphy.gif)
 
-### This is stupid.
-
-![](https://media.giphy.com/media/QGzPdYCcBbbZm/giphy.gif)
+![fu](https://media.giphy.com/media/QGzPdYCcBbbZm/giphy.gif)
