@@ -20,7 +20,6 @@ pthread_mutex_t lock;
 
 static int verbose_flag = 0;
 static int newlines_flag = 0;
-static int double_hash_flag = 0;
 static char *format;
 
 FILE *blob;
@@ -30,14 +29,15 @@ char *all_chars = "0123456789abcdef";
 int count = 0;
 void (*hash_fun_ptr)(char *, char *);
 int found = 0;
+int applied_hashing = 1;
 
 static struct option long_options[] = {
     { "verbose",  no_argument,       0,               1  },
     { "format",   required_argument, 0,              'f' },
     { "wordlist", required_argument, 0,              'w' },
     { "target",   required_argument, 0,              't' },
+    { "amount",   required_argument, 0,              'a' },
     { "newlines", no_argument,       0,              'n' },
-    { "double",   no_argument,       0,              'd' },
     { "help",     no_argument,       0,              'h' },
     {  0,         0,                 0,               0  }
 };
@@ -147,8 +147,10 @@ void *worker_callback(void *ptr)
         hash_fun_ptr(msg_line, hash);
 
         // Re-run the hash function on, but on the hash itself this time.
-        if (double_hash_flag) {
-            hash_fun_ptr(hash, hash);
+        if (applied_hashing > 1) {
+            for (int m = 0; m < applied_hashing - 1; m++) {
+                hash_fun_ptr(hash, hash);
+            }
         }
 
         if (verbose_flag != 0) {
@@ -210,7 +212,7 @@ void print_help()
     printf("         --format,   -f [hash_fun]: The hash function (md5|sha256)\n");
     printf("         --target,   -t [hash]:     The hash to check\n");
     printf("         --newlines, -n:            Whether to hash with newlines\n");
-    printf("         --double,   -d:            Double hash\n");
+    printf("         --amount,   -a:            Amount of hashing\n");
     printf("         --help,     -h:            Prints this message\n\n");
 }
 
@@ -251,8 +253,13 @@ void process_args(int c, int option_index)
         case 'n':
             newlines_flag = 1;
             break;
-        case 'd':
-            double_hash_flag = 1;
+        case 'a':
+            applied_hashing = atoi(optarg);
+
+            if (applied_hashing < 1) {
+                applied_hashing = 1;
+            }
+
             break;
         case 'v':
             verbose_flag = 1;
@@ -283,7 +290,7 @@ int main(int argc, char **argv)
     pthread_mutex_init(&lock, NULL);
     int c;
 
-    while ((c = getopt_long(argc, argv, "f:w:t:ndhv", long_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "f:w:t:a:nhv", long_options, &option_index)) != -1) {
         process_args(c, option_index);
     }
 
@@ -299,8 +306,8 @@ int main(int argc, char **argv)
         printf("With newlines");
     }
 
-    if (double_hash_flag != 0) {
-        printf(" and double hashing.");
+    if (applied_hashing > 1) {
+        printf(" and hashing %i times.", applied_hashing);
     }
 
     printf("\n");
