@@ -14,15 +14,16 @@ Then run:
 
 ```
 $ ./hashcrack 
-Creating 4 threads
+Creating 8 threads
 hashchcker
 
 Usage:   hashchcker [options]
 
 Options: --wordlist, -w [filename]: The wordlist to check against
-         --format,   -f [hash_fun]: The hash function (md5|sha256)
+         --format,   -f [hash_fun]: The hash function (md5|sha|sha1|sha256|sha512)
          --target,   -t [hash]:     The hash to check
          --newlines, -n:            Whether to hash with newlines
+         --amount,   -a:            Amount of hashing
          --help,     -h:            Prints this message
 ```
 
@@ -45,6 +46,22 @@ Creating 4 threads
 Reading /home/conmarap/Desktop/Labs/lab-crypto2/tools/SecLists/Passwords/english.txt and producing sha256 with newlines
 The result is (with a newline): test
 Found it after 301649 tries and 1.953693 seconds!
+```
+
+Then there's the amount of nesting. In other words, a hash within a hash. In the example below we have the word 'zeta' hashed twice.
+
+```
+./hashcrack --wordlist ../SecLists/Passwords/english.txt --format sha512 --target 9bfdb2e82597de7542396cc07cad208053e2d769f31024d8e8c552a58e59e908b4e4392a9436d459005cbbb46547c341d6b07aa31ebcecc2955fe5db19fbfe09 -a 2
+```
+
+This should return the following:
+
+```
+Creating 8 threads
+Reading ../SecLists/Passwords/english.txt and producing sha512
+Hashing 2 times.
+The result is (without a newline): zeta
+Found it after 346561 tries and 9.854559 seconds!
 ```
 
 ## Wodlists

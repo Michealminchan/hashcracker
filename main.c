@@ -261,14 +261,12 @@ int main(int argc, char **argv)
     printf("Reading %s and producing %s\n", wordlist, format);
 
     if (newlines_flag != 0) {
-        printf("With newlines");
+        printf("With newlines.\n");
     }
 
     if (applied_hashing > 1) {
-        printf(" and hashing %i times.", applied_hashing);
+        printf("Hashing %i times.\n", applied_hashing);
     }
-
-    printf("\n");
 
     FILE *msgs = fopen(wordlist, "r");
     blob = msgs;
