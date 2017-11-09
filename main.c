@@ -15,6 +15,8 @@
 #include <openssl/sha.h>
 #include <openssl/md5.h>
 #include "hash.h"
+#include "cracker.h"
+#include "tcp.h"
 
 clock_t begin;
 pthread_mutex_t lock;
@@ -32,6 +34,9 @@ void (*hash_fun_ptr)(char *, char *);
 int found = 0;
 int applied_hashing = 1;
 int hash_length = 0;
+int is_master_node = 0;
+int is_slave_node = 0;
+char *target_master_ip = NULL;
 
 static struct option long_options[] = {
     { "verbose",  no_argument,       0,               1  },
@@ -39,7 +44,9 @@ static struct option long_options[] = {
     { "wordlist", required_argument, 0,              'w' },
     { "target",   required_argument, 0,              't' },
     { "amount",   required_argument, 0,              'a' },
+    { "slave",    required_argument, 0,              's' },
     { "newlines", no_argument,       0,              'n' },
+    { "master",   no_argument,       0,              'm' },
     { "help",     no_argument,       0,              'h' },
     {  0,         0,                 0,               0  }
 };
@@ -48,10 +55,10 @@ static struct option long_options[] = {
  * Returns the size of the blob.
  * @param char[] The message line.
  */
-void manage_read(char msg_line[100])
+void manage_read(char msg_line[255])
 {
     // Read a line from the blob.
-    fgets(msg_line, 100, blob);
+    fgets(msg_line, 255, blob);
 
     // Return if the end of the line was reached.
     if (msg_line == NULL) {
@@ -60,17 +67,33 @@ void manage_read(char msg_line[100])
 }
 
 /**
+ * Gets the next word from the list.
+ * @param char[] The message line.
+ */
+void get_next(char msg_line[255])
+{
+    if (is_slave_node) {
+        // Call the server for the next word.
+        get_next_from_master(target_master_ip, msg_line);
+        return;
+    }
+
+    // Read the word directly from the file.
+    pthread_mutex_lock(&lock);
+    manage_read(msg_line);
+    pthread_mutex_unlock(&lock);
+}
+
+/**
  * This is the worker callback.
  * @param ptr The input to the worker's callback.
- * 
  */
 void *worker_callback(void *ptr)
 {
     char msg_line[256];
 
-    pthread_mutex_lock(&lock);
-    manage_read(msg_line);
-    pthread_mutex_unlock(&lock);
+    // Get the next word.
+    get_next(msg_line);
 
     while (msg_line && found == 0) {
         if (found == 1) {
@@ -79,9 +102,8 @@ void *worker_callback(void *ptr)
         }
 
         if (strlen(msg_line) == 0) {
-            pthread_mutex_lock(&lock);
-            manage_read(msg_line);
-            pthread_mutex_unlock(&lock);
+            // Get the next word if the word was empty.
+            get_next(msg_line);
             continue;
         }
 
@@ -138,9 +160,8 @@ void *worker_callback(void *ptr)
             break;
         }
 
-        pthread_mutex_lock(&lock);
-        manage_read(msg_line);
-        pthread_mutex_unlock(&lock);
+        // Get the next word.
+        get_next(msg_line);
     }
 
     // Exit the thread.
@@ -161,6 +182,7 @@ void print_help()
     printf("         --target,   -t [hash]:     The hash to check\n");
     printf("         --newlines, -n:            Whether to hash with newlines\n");
     printf("         --amount,   -a:            Amount of hashing\n");
+    printf("         --master,   -m:            Set up a master node\n");
     printf("         --help,     -h:            Prints this message\n\n");
 }
 
@@ -219,6 +241,14 @@ void process_args(int c, int option_index)
             }
 
             break;
+        case 's':
+            is_slave_node = 1;
+            target_master_ip = (char *) malloc((strlen(optarg) + 1) * sizeof(char));
+            strcpy(target_master_ip, optarg);
+            break;
+        case 'm':
+            is_master_node = 1;
+            break;
         case 'v':
             verbose_flag = 1;
             break;
@@ -248,12 +278,20 @@ int main(int argc, char **argv)
     pthread_mutex_init(&lock, NULL);
     int c;
 
-    while ((c = getopt_long(argc, argv, "f:w:t:a:nhv", long_options, &option_index)) != -1) {
+    // Get the arguments from the command line.
+    while ((c = getopt_long(argc, argv, "f:w:t:a:s:nhmv", long_options, &option_index)) != -1) {
+        // Process those args.
         process_args(c, option_index);
     }
 
+    // Are we setting up a server? If so, only the wordlist is mandatory.
+    if (is_master_node && !wordlist) {
+        print_help();
+        return 1;
+    }
+
     // If something is missing print the help message.
-    if (!wordlist || !format || !target_hash) {
+    else if (!is_master_node && (!wordlist || !format || !target_hash)) {
         print_help();
         return 1;
     }
@@ -268,12 +306,21 @@ int main(int argc, char **argv)
         printf("Hashing %i times.\n", applied_hashing);
     }
 
-    FILE *msgs = fopen(wordlist, "r");
-    blob = msgs;
+    if (!is_slave_node) {
+        // Open the wordlist file.
+        FILE *msgs = fopen(wordlist, "r");
+        blob = msgs;
 
-    if (msgs == NULL) {
-        printf("Invalid wordlist file\n");
-        return 1;
+        if (msgs == NULL) {
+            printf("Invalid wordlist file\n");
+            return 1;
+        }
+    }
+
+    // Create a server and start listening in on connections in order to make clients able
+    // to get new jobs.
+    if (is_master_node) {
+        return create_server();
     }
 
     // Create as many threads as there are cores.
