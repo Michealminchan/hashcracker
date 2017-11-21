@@ -142,6 +142,7 @@ void *worker_callback(void *ptr)
             double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
             printf("Found it after %i tries and %f seconds!\n", count, time_spent);
+            printf("The speed was %.2f KHs\n", count / time_spent / 1000);
 
             // Close the blob file.
             if (blob) {
@@ -175,15 +176,23 @@ void *worker_callback(void *ptr)
  */
 void print_help()
 {
-    printf("hashchcker\n\n");
-    printf("Usage:   hashchcker [options]\n\n");
+    printf("hashcrack\n\n");
+    printf("Usage:   hashcrack [options]\n\n");
     printf("Options: --wordlist, -w [filename]: The wordlist to check against\n");
     printf("         --format,   -f [hash_fun]: The hash function (md5|sha|sha1|sha256|sha512)\n");
     printf("         --target,   -t [hash]:     The hash to check\n");
+    printf("         --amount,   -a [amount]:   Amount of hashing\n");
     printf("         --newlines, -n:            Whether to hash with newlines\n");
     printf("         --amount,   -a:            Amount of hashing\n");
     printf("         --master,   -m:            Set up a master node\n");
     printf("         --help,     -h:            Prints this message\n\n");
+    printf("Examples:\n");
+    printf("  Crack the MD5 hash of the word 'test'\n");
+    printf("    hashcrack -f md5 -t 098f6bcd4621d373cade4e832627b4f6 -w /path/to/wordlist\n");
+    printf("  Crack the double MD5 hash of the word 'test'\n");
+    printf("    hashcrack -f md5 -t fb469d7ef430b0baf0cab6c436e70375 -a 2 -w /path/to/wordlist\n");
+    printf("  Crack the MD5 hash of the word 'test' that's followed by a newline\n");
+    printf("    hashcrack -f md5 -t d8e8fca2dc0f896fd7cb4cb0031ba249 -n -w /path/to/wordlist\n\n");
 }
 
 /**
@@ -335,4 +344,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-

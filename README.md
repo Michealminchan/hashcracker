@@ -15,16 +15,24 @@ Then run:
 ```
 $ ./hashcrack 
 Creating 8 threads
-hashchcker
+hashcrack
 
-Usage:   hashchcker [options]
+Usage:   hashcrack [options]
 
 Options: --wordlist, -w [filename]: The wordlist to check against
          --format,   -f [hash_fun]: The hash function (md5|sha|sha1|sha256|sha512)
          --target,   -t [hash]:     The hash to check
+         --amount,   -a [amount]:   Amount of hashing
          --newlines, -n:            Whether to hash with newlines
-         --amount,   -a:            Amount of hashing
          --help,     -h:            Prints this message
+
+Examples:
+  Crack the MD5 hash of the word 'test'
+    hashcrack -f md5 -t 098f6bcd4621d373cade4e832627b4f6 -w /path/to/wordlist
+  Crack the double MD5 hash of the word 'test'
+    hashcrack -f md5 -t fb469d7ef430b0baf0cab6c436e70375 -a 2 -w /path/to/wordlist
+  Crack the MD5 hash of the word 'test' that's followed by a newline
+    hashcrack -f md5 -t d8e8fca2dc0f896fd7cb4cb0031ba249 -n -w /path/to/wordlist
 ```
 
 Example usage:
@@ -43,7 +51,7 @@ The above commands should output something like the following:
 
 ```
 Creating 4 threads
-Reading /home/conmarap/Desktop/Labs/lab-crypto2/tools/SecLists/Passwords/english.txt and producing sha256 with newlines
+Reading ../SecLists/Passwords/english.txt and producing sha256 with newlines
 The result is (with a newline): test
 Found it after 301649 tries and 1.953693 seconds!
 ```
